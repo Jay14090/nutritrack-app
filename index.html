@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NutriTrack — AI-powered calorie and macro tracker with natural language food logging">
+  <title>NutriTrack — Smart Calorie Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">🔥</div>
+        <div class="logo-text">NutriTrack</div>
+      </div>
+      <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+    </header>
+
+    <!-- API KEY MODAL -->
+    <div class="modal-overlay" id="keyModal">
+      <div class="modal-card">
+        <div class="modal-title">🔑 Setup Required</div>
+        <p class="modal-desc">Enter your OpenAI API key to enable AI food parsing. Your key is stored locally in your browser — never sent to any server except OpenAI.</p>
+        <input type="password" class="modal-input" id="apiKeyInput" placeholder="sk-proj-..." autocomplete="off">
+        <button class="modal-save-btn" id="saveKeyBtn">Save & Start</button>
+        <p class="modal-hint">Get a key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></p>
+      </div>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="today">Today</button>
+      <button class="tab-btn" data-tab="week">Week</button>
+      <button class="tab-btn" data-tab="month">Month</button>
+    </nav>
+
+    <!-- ═══ TODAY TAB ═══ -->
+    <div class="tab-content active" id="tab-today">
+      <nav class="date-nav">
+        <button class="date-btn" id="prevDay">◀</button>
+        <div class="date-label" id="dateLabel">Today</div>
+        <button class="date-btn" id="nextDay">▶</button>
+      </nav>
+
+      <section class="calorie-ring-section">
+        <div class="ring-container">
+          <svg class="ring-svg" viewBox="0 0 200 200">
+            <defs>
+              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#38bd94"/>
+                <stop offset="100%" stop-color="#2dd4bf"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="100" cy="100" r="88"/>
+            <circle class="ring-progress" id="ringProgress" cx="100" cy="100" r="88"
+                    stroke-dasharray="553" stroke-dashoffset="553"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-eaten" id="caloriesEaten">0</div>
+            <div class="ring-label">eaten</div>
+          </div>
+        </div>
+        <div class="ring-remaining" id="caloriesRemaining"><span>2200</span> kcal remaining</div>
+      </section>
+
+      <section class="macro-bars">
+        <div class="macro-row">
+          <div class="macro-icon protein"></div>
+          <div class="macro-name">Protein</div>
+          <div class="macro-bar-track"><div class="macro-bar-fill protein" id="proteinFill" style="width:0%"></div></div>
+          <div class="macro-value" id="proteinValue">0g <span>/ 180g</span></div>
+        </div>
+        <div class="macro-row">
+          <div class="macro-icon fat"></div>
+          <div class="macro-name">Fat</div>
+          <div class="macro-bar-track"><div class="macro-bar-fill fat" id="fatFill" style="width:0%"></div></div>
+          <div class="macro-value" id="fatValue">0g <span>/ 70g</span></div>
+        </div>
+        <div class="macro-row">
+          <div class="macro-icon carbs"></div>
+          <div class="macro-name">Carbs</div>
+          <div class="macro-bar-track"><div class="macro-bar-fill carbs" id="carbsFill" style="width:0%"></div></div>
+          <div class="macro-value" id="carbsValue">0g <span>/ 220g</span></div>
+        </div>
+      </section>
+
+      <section class="input-section">
+        <div class="input-wrapper">
+          <input type="text" class="food-input" id="foodInput"
+                 placeholder="Type what you ate... e.g. 2 roti dal sabzi" autocomplete="off">
+          <button class="submit-btn" id="submitBtn" title="Log food">→</button>
+        </div>
+        <div class="ai-reply" id="aiReply"></div>
+      </section>
+
+      <section class="log-section">
+        <div class="log-header">
+          <div class="log-title">Today's Log</div>
+          <div class="log-count" id="logCount">0 items</div>
+        </div>
+        <div class="food-log" id="foodLog">
+          <div class="empty-state">
+            <div class="empty-icon">🍽️</div>
+            <div class="empty-text">No food logged yet</div>
+            <div class="empty-hint">Type what you ate to get started</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ═══ WEEK TAB ═══ -->
+    <div class="tab-content" id="tab-week">
+      <div id="weekContent">
+        <div class="stats-loading">
+          <div class="spinner-large"></div>
+          <div>Loading weekly stats...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MONTH TAB ═══ -->
+    <div class="tab-content" id="tab-month">
+      <div id="monthContent">
+        <div class="stats-loading">
+          <div class="spinner-large"></div>
+          <div>Loading monthly stats...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
