@@ -1,1 +1,1 @@
-config.js
+# Nothing to ignore — config.js is safe (no secrets, key loaded from localStorage)
