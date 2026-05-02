@@ -77,6 +77,11 @@ async function deleteLog(id) {
   if (error) console.error('Delete error:', error);
 }
 
+async function updateLog(id, updates) {
+  const { error } = await db.from('food_logs').update(updates).eq('id', id);
+  if (error) console.error('Update error:', error);
+}
+
 async function fetchRange(startDate, endDate) {
   const { data, error } = await db
     .from('food_logs')
@@ -173,6 +178,7 @@ function renderLog(entries) {
       <div class="food-card-header">
         <div class="food-name">${getEmoji(i.name)} ${i.name}</div>
         <div class="food-calories">${i.calories} kcal
+          <button class="edit-btn" onclick="showEditModal('${i.id}','${i.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}',${i.calories},${i.protein_g},${i.fat_g},${i.carbs_g},${i.fiber_g || 0})" title="Edit macros">✎</button>
           <button class="delete-btn" onclick="delEntry('${i.id}')" title="Remove">✕</button>
         </div>
       </div>
@@ -403,6 +409,82 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('visible'), 3000);
 }
 
+// ─── EDIT MODAL ───
+function showEditModal(id, name, cal, pro, fat, carbs, fiber) {
+  document.getElementById('editFoodId').value = id;
+  document.getElementById('editFoodName').value = name;
+  document.getElementById('editCalories').value = cal;
+  document.getElementById('editProtein').value = pro;
+  document.getElementById('editFat').value = fat;
+  document.getElementById('editCarbs').value = carbs;
+  document.getElementById('editFiber').value = fiber;
+  document.getElementById('editModal').classList.add('visible');
+  document.getElementById('editFoodName').focus();
+}
+
+function hideEditModal() {
+  document.getElementById('editModal').classList.remove('visible');
+}
+
+async function saveEditFood() {
+  const id = document.getElementById('editFoodId').value;
+  const name = document.getElementById('editFoodName').value.trim();
+  const cal = parseInt(document.getElementById('editCalories').value) || 0;
+  const pro = parseInt(document.getElementById('editProtein').value) || 0;
+  const fat = parseInt(document.getElementById('editFat').value) || 0;
+  const carbs = parseInt(document.getElementById('editCarbs').value) || 0;
+  const fiber = parseInt(document.getElementById('editFiber').value) || 0;
+
+  if (!name) {
+    document.getElementById('editFoodName').style.borderColor = '#f87171';
+    return;
+  }
+
+  await updateLog(id, {
+    name, calories: cal, protein_g: pro, fat_g: fat, carbs_g: carbs, fiber_g: fiber
+  });
+  hideEditModal();
+  await refreshToday();
+  showToast('✅ Macros updated');
+}
+
+// ─── MANUAL ADD MODAL ───
+function showAddModal() {
+  document.getElementById('addFoodName').value = '';
+  document.getElementById('addCalories').value = '';
+  document.getElementById('addProtein').value = '';
+  document.getElementById('addFat').value = '';
+  document.getElementById('addCarbs').value = '';
+  document.getElementById('addFiber').value = '';
+  document.getElementById('addModal').classList.add('visible');
+  document.getElementById('addFoodName').focus();
+}
+
+function hideAddModal() {
+  document.getElementById('addModal').classList.remove('visible');
+}
+
+async function saveAddFood() {
+  const name = document.getElementById('addFoodName').value.trim();
+  const cal = parseInt(document.getElementById('addCalories').value) || 0;
+  const pro = parseInt(document.getElementById('addProtein').value) || 0;
+  const fat = parseInt(document.getElementById('addFat').value) || 0;
+  const carbs = parseInt(document.getElementById('addCarbs').value) || 0;
+  const fiber = parseInt(document.getElementById('addFiber').value) || 0;
+
+  if (!name) {
+    document.getElementById('addFoodName').style.borderColor = '#f87171';
+    return;
+  }
+
+  await insertLogs([{
+    name, calories: cal, protein_g: pro, fat_g: fat, carbs_g: carbs, fiber_g: fiber
+  }], APP.currentDate);
+  hideAddModal();
+  await refreshToday();
+  showToast('✅ Food added');
+}
+
 // ─── INIT ───
 document.addEventListener('DOMContentLoaded', () => {
   // Register ALL event listeners FIRST (before any async calls)
@@ -425,6 +507,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('keyModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) hideKeyModal();
+  });
+
+  // Edit modal
+  document.getElementById('editSaveBtn').addEventListener('click', saveEditFood);
+  document.getElementById('editCancelBtn').addEventListener('click', hideEditModal);
+  document.getElementById('editModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) hideEditModal();
+  });
+
+  // Manual add modal
+  document.getElementById('manualAddBtn').addEventListener('click', showAddModal);
+  document.getElementById('addSaveBtn').addEventListener('click', saveAddFood);
+  document.getElementById('addCancelBtn').addEventListener('click', hideAddModal);
+  document.getElementById('addModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) hideAddModal();
   });
 
   // Show modal if no API key configured

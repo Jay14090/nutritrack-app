@@ -100,7 +100,10 @@
       <section class="log-section">
         <div class="log-header">
           <div class="log-title">Today's Log</div>
-          <div class="log-count" id="logCount">0 items</div>
+          <div class="log-header-right">
+            <button class="manual-add-btn" id="manualAddBtn" title="Add food manually">+ Add</button>
+            <div class="log-count" id="logCount">0 items</div>
+          </div>
         </div>
         <div class="food-log" id="foodLog">
           <div class="empty-state">
@@ -132,6 +135,83 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- EDIT FOOD MODAL -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-card edit-modal-card">
+      <div class="modal-title">✏️ Edit Macros</div>
+      <p class="modal-desc">Correct the AI-estimated values for this food item.</p>
+      <input type="hidden" id="editFoodId">
+      <div class="edit-field">
+        <label class="edit-label">Food Name</label>
+        <input type="text" class="modal-input" id="editFoodName" placeholder="e.g. Chicken Breast">
+      </div>
+      <div class="edit-grid">
+        <div class="edit-field">
+          <label class="edit-label">Calories</label>
+          <input type="number" class="modal-input compact" id="editCalories" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label protein-label">Protein (g)</label>
+          <input type="number" class="modal-input compact" id="editProtein" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label fat-label">Fat (g)</label>
+          <input type="number" class="modal-input compact" id="editFat" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label carbs-label">Carbs (g)</label>
+          <input type="number" class="modal-input compact" id="editCarbs" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Fiber (g)</label>
+        <input type="number" class="modal-input compact" id="editFiber" placeholder="0" min="0">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel-btn" id="editCancelBtn">Cancel</button>
+        <button class="modal-save-btn" id="editSaveBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL ADD FOOD MODAL -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal-card edit-modal-card">
+      <div class="modal-title">🍽️ Add Food Manually</div>
+      <p class="modal-desc">Enter your own food item with exact macro values.</p>
+      <div class="edit-field">
+        <label class="edit-label">Food Name</label>
+        <input type="text" class="modal-input" id="addFoodName" placeholder="e.g. Grilled Chicken Breast">
+      </div>
+      <div class="edit-grid">
+        <div class="edit-field">
+          <label class="edit-label">Calories</label>
+          <input type="number" class="modal-input compact" id="addCalories" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label protein-label">Protein (g)</label>
+          <input type="number" class="modal-input compact" id="addProtein" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label fat-label">Fat (g)</label>
+          <input type="number" class="modal-input compact" id="addFat" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label carbs-label">Carbs (g)</label>
+          <input type="number" class="modal-input compact" id="addCarbs" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Fiber (g)</label>
+        <input type="number" class="modal-input compact" id="addFiber" placeholder="0" min="0">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel-btn" id="addCancelBtn">Cancel</button>
+        <button class="modal-save-btn" id="addSaveBtn">Add Food</button>
+      </div>
+    </div>
   </div>
 
   <!-- TOAST -->

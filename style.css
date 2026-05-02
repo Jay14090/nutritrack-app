@@ -543,3 +543,82 @@ body::before {
 }
 .toast.visible { display: block; }
 
+/* ─── LOG HEADER RIGHT ─── */
+.log-header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ─── MANUAL ADD BUTTON ─── */
+.manual-add-btn {
+  background: rgba(56,189,148,0.1); border: 1px solid rgba(56,189,148,0.25);
+  color: var(--accent); font-family: 'Inter', sans-serif;
+  font-size: 0.72rem; font-weight: 700; padding: 5px 12px;
+  border-radius: 20px; cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.manual-add-btn:hover {
+  background: rgba(56,189,148,0.2); border-color: var(--accent);
+  transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,189,148,0.2);
+}
+
+/* ─── EDIT BUTTON ON FOOD CARD ─── */
+.edit-btn {
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 14px; padding: 4px; border-radius: 6px;
+  transition: all 0.2s; opacity: 0;
+}
+.food-card:hover .edit-btn { opacity: 1; }
+.edit-btn:hover { color: var(--accent); background: rgba(56,189,148,0.1); }
+
+/* ─── EDIT MODAL ─── */
+.edit-modal-card { max-width: 420px; }
+
+.edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-bottom: 12px;
+}
+
+.edit-field { margin-bottom: 12px; }
+.edit-grid .edit-field { margin-bottom: 0; }
+
+.edit-label {
+  display: block; font-size: 0.72rem; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.6px; margin-bottom: 6px;
+}
+
+.edit-label.protein-label { color: var(--protein-color); }
+.edit-label.fat-label { color: var(--fat-color); }
+.edit-label.carbs-label { color: var(--carbs-color); }
+
+.modal-input.compact {
+  padding: 12px 14px; font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Remove spinner arrows from number inputs */
+.modal-input.compact::-webkit-outer-spin-button,
+.modal-input.compact::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+.modal-input.compact[type=number] {
+  -moz-appearance: textfield;
+}
+
+.modal-actions {
+  display: flex; gap: 10px; margin-top: 20px;
+}
+
+.modal-cancel-btn {
+  flex: 1; padding: 14px;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 12px; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+  color: var(--text-secondary); transition: all 0.2s;
+}
+.modal-cancel-btn:hover {
+  border-color: var(--border-glow); color: var(--text-primary);
+}
+
+.modal-actions .modal-save-btn { flex: 1.5; }
+
