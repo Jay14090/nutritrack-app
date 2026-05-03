@@ -17,7 +17,21 @@
         <div class="logo-icon">🔥</div>
         <div class="logo-text">NutriTrack</div>
       </div>
-      <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+      <div class="header-actions">
+        <div class="fav-dropdown-wrapper">
+          <button class="fav-header-btn" id="favToggleBtn" title="Favorites">⭐</button>
+          <div class="fav-dropdown" id="favDropdown">
+            <div class="fav-dropdown-header">
+              <div class="fav-dropdown-title">⭐ Favorites</div>
+              <button class="fav-add-new-btn" id="favAddNewBtn" title="Add new favorite">+ New</button>
+            </div>
+            <div class="fav-dropdown-list" id="favList">
+              <div class="fav-empty">No favorites yet.<br><span>Star a food or tap "+ New"</span></div>
+            </div>
+          </div>
+        </div>
+        <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+      </div>
     </header>
 
     <!-- API KEY MODAL -->
@@ -210,6 +224,44 @@
       <div class="modal-actions">
         <button class="modal-cancel-btn" id="addCancelBtn">Cancel</button>
         <button class="modal-save-btn" id="addSaveBtn">Add Food</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD FAVORITE MODAL -->
+  <div class="modal-overlay" id="favModal">
+    <div class="modal-card edit-modal-card">
+      <div class="modal-title">⭐ Add Favorite</div>
+      <p class="modal-desc">Save a food item with its macros so you can quickly log it anytime.</p>
+      <div class="edit-field">
+        <label class="edit-label">Food Name</label>
+        <input type="text" class="modal-input" id="favFoodName" placeholder="e.g. Grilled Chicken Breast">
+      </div>
+      <div class="edit-grid">
+        <div class="edit-field">
+          <label class="edit-label">Calories</label>
+          <input type="number" class="modal-input compact" id="favCalories" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label protein-label">Protein (g)</label>
+          <input type="number" class="modal-input compact" id="favProtein" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label fat-label">Fat (g)</label>
+          <input type="number" class="modal-input compact" id="favFat" placeholder="0" min="0">
+        </div>
+        <div class="edit-field">
+          <label class="edit-label carbs-label">Carbs (g)</label>
+          <input type="number" class="modal-input compact" id="favCarbs" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">Fiber (g)</label>
+        <input type="number" class="modal-input compact" id="favFiber" placeholder="0" min="0">
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel-btn" id="favCancelBtn">Cancel</button>
+        <button class="modal-save-btn" id="favSaveBtn">Save Favorite</button>
       </div>
     </div>
   </div>

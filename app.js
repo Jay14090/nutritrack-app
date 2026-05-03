@@ -173,11 +173,14 @@ function renderLog(entries) {
     cnt.textContent = '0 items'; return;
   }
   cnt.textContent = `${entries.length} item${entries.length > 1 ? 's' : ''}`;
-  c.innerHTML = entries.map(i => `
+  c.innerHTML = entries.map(i => {
+    const isFav = isFavorite(i.name);
+    return `
     <div class="food-card">
       <div class="food-card-header">
         <div class="food-name">${getEmoji(i.name)} ${i.name}</div>
         <div class="food-calories">${i.calories} kcal
+          <button class="fav-star-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFavFromCard('${i.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}',${i.calories},${i.protein_g},${i.fat_g},${i.carbs_g},${i.fiber_g || 0}, this)" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">★</button>
           <button class="edit-btn" onclick="showEditModal('${i.id}','${i.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}',${i.calories},${i.protein_g},${i.fat_g},${i.carbs_g},${i.fiber_g || 0})" title="Edit macros">✎</button>
           <button class="delete-btn" onclick="delEntry('${i.id}')" title="Remove">✕</button>
         </div>
@@ -188,7 +191,8 @@ function renderLog(entries) {
         <div class="food-macro c">C: <span>${i.carbs_g}g</span></div>
         ${i.fiber_g ? `<div class="food-macro">Fiber: ${i.fiber_g}g</div>` : ''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function refreshToday() {
@@ -485,6 +489,148 @@ async function saveAddFood() {
   showToast('✅ Food added');
 }
 
+// ─── FAVORITES SYSTEM (localStorage) ───
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem('nutritrack_favorites') || '[]'); }
+  catch { return []; }
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem('nutritrack_favorites', JSON.stringify(favs));
+}
+
+function isFavorite(name) {
+  return getFavorites().some(f => f.name.toLowerCase() === name.toLowerCase());
+}
+
+function addFavorite(item) {
+  const favs = getFavorites();
+  if (favs.some(f => f.name.toLowerCase() === item.name.toLowerCase())) return false;
+  favs.push(item);
+  saveFavorites(favs);
+  return true;
+}
+
+function removeFavorite(name) {
+  const favs = getFavorites().filter(f => f.name.toLowerCase() !== name.toLowerCase());
+  saveFavorites(favs);
+}
+
+function renderFavDropdown() {
+  const list = document.getElementById('favList');
+  const favs = getFavorites();
+  if (!favs.length) {
+    list.innerHTML = '<div class="fav-empty">No favorites yet.<br><span>Star a food or tap \"+ New\"</span></div>';
+    return;
+  }
+  list.innerHTML = favs.map((f, idx) => `
+    <div class="fav-item">
+      <div class="fav-item-info">
+        <div class="fav-item-name">${getEmoji(f.name)} ${f.name}</div>
+        <div class="fav-item-macros">
+          <span class="cal">${f.calories} kcal</span>
+          <span class="p">P:${f.protein_g}g</span>
+          <span class="f">F:${f.fat_g}g</span>
+          <span class="c">C:${f.carbs_g}g</span>
+        </div>
+      </div>
+      <div class="fav-item-actions">
+        <button class="fav-log-btn" onclick="logFavorite(${idx})" title="Add to today's log">+ Log</button>
+        <button class="fav-remove-btn" onclick="deleteFavorite(${idx})" title="Remove favorite">&times;</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleFavDropdown() {
+  const dd = document.getElementById('favDropdown');
+  const btn = document.getElementById('favToggleBtn');
+  const isOpen = dd.classList.contains('visible');
+  if (isOpen) {
+    dd.classList.remove('visible');
+    btn.classList.remove('active');
+  } else {
+    renderFavDropdown();
+    dd.classList.add('visible');
+    btn.classList.add('active');
+  }
+}
+
+function closeFavDropdown() {
+  document.getElementById('favDropdown').classList.remove('visible');
+  document.getElementById('favToggleBtn').classList.remove('active');
+}
+
+function toggleFavFromCard(name, cal, pro, fat, carbs, fiber, btnEl) {
+  if (isFavorite(name)) {
+    removeFavorite(name);
+    btnEl.classList.remove('is-fav');
+    btnEl.title = 'Add to favorites';
+    showToast('Removed from favorites');
+  } else {
+    addFavorite({ name, calories: cal, protein_g: pro, fat_g: fat, carbs_g: carbs, fiber_g: fiber });
+    btnEl.classList.add('is-fav');
+    btnEl.title = 'Remove from favorites';
+    showToast('⭐ Added to favorites');
+  }
+  renderFavDropdown();
+}
+
+async function logFavorite(idx) {
+  const favs = getFavorites();
+  const f = favs[idx];
+  if (!f) return;
+  await insertLogs([{ name: f.name, calories: f.calories, protein_g: f.protein_g, fat_g: f.fat_g, carbs_g: f.carbs_g, fiber_g: f.fiber_g }], APP.currentDate);
+  await refreshToday();
+  showToast(`✅ Logged ${f.name}`);
+}
+
+function deleteFavorite(idx) {
+  const favs = getFavorites();
+  favs.splice(idx, 1);
+  saveFavorites(favs);
+  renderFavDropdown();
+  refreshToday(); // re-render star states
+  showToast('Removed from favorites');
+}
+
+// ─── FAVORITE MODAL (add new) ───
+function showFavModal() {
+  closeFavDropdown();
+  document.getElementById('favFoodName').value = '';
+  document.getElementById('favCalories').value = '';
+  document.getElementById('favProtein').value = '';
+  document.getElementById('favFat').value = '';
+  document.getElementById('favCarbs').value = '';
+  document.getElementById('favFiber').value = '';
+  document.getElementById('favModal').classList.add('visible');
+  document.getElementById('favFoodName').focus();
+}
+
+function hideFavModal() {
+  document.getElementById('favModal').classList.remove('visible');
+}
+
+function saveFavFromModal() {
+  const name = document.getElementById('favFoodName').value.trim();
+  const cal = parseInt(document.getElementById('favCalories').value) || 0;
+  const pro = parseInt(document.getElementById('favProtein').value) || 0;
+  const fat = parseInt(document.getElementById('favFat').value) || 0;
+  const carbs = parseInt(document.getElementById('favCarbs').value) || 0;
+  const fiber = parseInt(document.getElementById('favFiber').value) || 0;
+  if (!name) {
+    document.getElementById('favFoodName').style.borderColor = '#f87171';
+    return;
+  }
+  const added = addFavorite({ name, calories: cal, protein_g: pro, fat_g: fat, carbs_g: carbs, fiber_g: fiber });
+  if (!added) {
+    showToast('Already in favorites');
+    return;
+  }
+  hideFavModal();
+  renderFavDropdown();
+  showToast('⭐ Saved to favorites');
+}
+
 // ─── INIT ───
 document.addEventListener('DOMContentLoaded', () => {
   // Register ALL event listeners FIRST (before any async calls)
@@ -522,6 +668,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addCancelBtn').addEventListener('click', hideAddModal);
   document.getElementById('addModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) hideAddModal();
+  });
+
+  // Favorites dropdown
+  document.getElementById('favToggleBtn').addEventListener('click', toggleFavDropdown);
+  document.getElementById('favAddNewBtn').addEventListener('click', showFavModal);
+
+  // Close dropdown on outside click
+  document.addEventListener('click', e => {
+    const wrapper = document.querySelector('.fav-dropdown-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) closeFavDropdown();
+  });
+
+  // Favorites modal
+  document.getElementById('favSaveBtn').addEventListener('click', saveFavFromModal);
+  document.getElementById('favCancelBtn').addEventListener('click', hideFavModal);
+  document.getElementById('favModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) hideFavModal();
   });
 
   // Show modal if no API key configured
