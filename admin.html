@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NutriTrack Admin Panel — Manage users and access">
+  <title>NutriTrack Admin</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+  <div class="admin-login-overlay" id="adminLoginOverlay">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon">🛡️</div>
+        <div class="login-logo-text">NutriTrack</div>
+        <div class="login-logo-sub">Admin Panel</div>
+      </div>
+      <div class="login-form">
+        <div class="input-group"><label class="input-label">Admin ID</label>
+          <input type="text" class="login-input" id="adminIdInput" placeholder="Enter admin ID" autocomplete="off"></div>
+        <div class="input-group"><label class="input-label">Password</label>
+          <input type="password" class="login-input" id="adminPassInput" placeholder="Enter password" autocomplete="off"></div>
+        <div class="login-error" id="adminLoginError"></div>
+        <button class="login-btn" id="adminLoginBtn">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-container" id="adminDashboard" style="display:none;">
+    <header class="admin-header">
+      <div class="admin-logo"><div class="admin-logo-icon">🛡️</div><div class="admin-logo-text">NutriTrack <span>Admin</span></div></div>
+      <div class="admin-header-actions">
+        <a href="index.html" class="admin-link-btn">🔥 App</a>
+        <button class="admin-logout-btn" id="adminLogoutBtn">Logout</button>
+      </div>
+    </header>
+    <section class="admin-stats" id="adminStats">
+      <div class="admin-stat-card accent"><div class="admin-stat-value" id="statTotalUsers">0</div><div class="admin-stat-label">Total Users</div></div>
+      <div class="admin-stat-card success"><div class="admin-stat-value" id="statActiveUsers">0</div><div class="admin-stat-label">Active</div></div>
+      <div class="admin-stat-card danger"><div class="admin-stat-value" id="statInactiveUsers">0</div><div class="admin-stat-label">Revoked</div></div>
+    </section>
+    <section class="admin-section">
+      <div class="section-header"><div class="section-title">👥 User Management</div>
+        <button class="create-user-btn" id="createUserBtn">+ Create User</button></div>
+      <div class="user-table-wrapper" id="userTableWrapper">
+        <div class="user-empty" id="userEmpty"><div class="user-empty-icon">👤</div><div>No users yet.</div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- CREATE USER MODAL -->
+  <div class="modal-overlay" id="createUserModal">
+    <div class="modal-card">
+      <div class="modal-title">👤 Create New User</div>
+      <p class="modal-desc">Set up login credentials for a new user.</p>
+      <div class="form-group"><label class="form-label">Username</label>
+        <input type="text" class="form-input" id="newUsername" placeholder="e.g. johndoe" autocomplete="off"></div>
+      <div class="form-group"><label class="form-label">Display Name</label>
+        <input type="text" class="form-input" id="newDisplayName" placeholder="e.g. John" autocomplete="off"></div>
+      <div class="form-group"><label class="form-label">Password</label>
+        <input type="text" class="form-input" id="newPassword" placeholder="Set a password" autocomplete="off"></div>
+      <div class="form-row">
+        <div class="form-group half"><label class="form-label">Calorie Goal</label>
+          <input type="number" class="form-input compact" id="newCalGoal" value="2200" min="500"></div>
+        <div class="form-group half"><label class="form-label">Protein (g)</label>
+          <input type="number" class="form-input compact" id="newProGoal" value="180" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group half"><label class="form-label">Fat (g)</label>
+          <input type="number" class="form-input compact" id="newFatGoal" value="70" min="0"></div>
+        <div class="form-group half"><label class="form-label">Carbs (g)</label>
+          <input type="number" class="form-input compact" id="newCarbsGoal" value="220" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">AI Provider</label>
+        <div class="provider-toggle">
+          <button class="provider-btn active" data-provider="openai" id="newProvOpenai">OpenAI</button>
+          <button class="provider-btn" data-provider="gemini" id="newProvGemini">Gemini</button>
+        </div></div>
+      <div class="form-group"><label class="form-label">API Key <span class="optional">(optional)</span></label>
+        <input type="text" class="form-input" id="newApiKey" placeholder="sk-... or AIza..." autocomplete="off"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel-btn" id="createCancelBtn">Cancel</button>
+        <button class="modal-save-btn" id="createSaveBtn">Create User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT USER MODAL -->
+  <div class="modal-overlay" id="editUserModal">
+    <div class="modal-card">
+      <div class="modal-title">✏️ Edit User</div>
+      <p class="modal-desc">Modify user settings and API keys.</p>
+      <input type="hidden" id="editUserId">
+      <div class="form-group"><label class="form-label">Username</label>
+        <input type="text" class="form-input" id="editUsername" disabled></div>
+      <div class="form-group"><label class="form-label">Display Name</label>
+        <input type="text" class="form-input" id="editDisplayName" autocomplete="off"></div>
+      <div class="form-group"><label class="form-label">New Password <span class="optional">(blank = keep)</span></label>
+        <input type="text" class="form-input" id="editPassword" placeholder="New password" autocomplete="off"></div>
+      <div class="form-row">
+        <div class="form-group half"><label class="form-label">Calorie Goal</label>
+          <input type="number" class="form-input compact" id="editCalGoal" min="500"></div>
+        <div class="form-group half"><label class="form-label">Protein (g)</label>
+          <input type="number" class="form-input compact" id="editProGoal" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group half"><label class="form-label">Fat (g)</label>
+          <input type="number" class="form-input compact" id="editFatGoal" min="0"></div>
+        <div class="form-group half"><label class="form-label">Carbs (g)</label>
+          <input type="number" class="form-input compact" id="editCarbsGoal" min="0"></div>
+      </div>
+      <div class="form-group"><label class="form-label">AI Provider</label>
+        <div class="provider-toggle">
+          <button class="provider-btn active" data-provider="openai" id="editProvOpenai">OpenAI</button>
+          <button class="provider-btn" data-provider="gemini" id="editProvGemini">Gemini</button>
+        </div></div>
+      <div class="form-group"><label class="form-label">API Key</label>
+        <input type="text" class="form-input" id="editApiKey" placeholder="sk-... or AIza..." autocomplete="off"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel-btn" id="editCancelBtn">Cancel</button>
+        <button class="modal-save-btn" id="editSaveBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
