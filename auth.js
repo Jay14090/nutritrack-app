@@ -86,3 +86,59 @@ async function queryAI(input, systemPrompt) {
   if (provider === 'gemini') return queryGemini(input, apiKey, systemPrompt);
   return queryOpenAI(input, apiKey, systemPrompt);
 }
+
+// ─── AI VISION PROVIDERS ───
+async function queryOpenAIVision(base64Data, mimeType, apiKey, systemPrompt) {
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: CONFIG.OPENAI_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: [
+          { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64Data}`, detail: 'low' } },
+          { type: 'text', text: 'Identify all food items in this photo and estimate their nutrition.' }
+        ]}
+      ],
+      temperature: 0.3,
+      max_tokens: 1000,
+    }),
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `API ${r.status}`); }
+  const d = await r.json();
+  let s = d.choices[0].message.content.trim();
+  const cb = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (cb) s = cb[1].trim();
+  return JSON.parse(s);
+}
+
+async function queryGeminiVision(base64Data, mimeType, apiKey, systemPrompt) {
+  const url = `${CONFIG.GEMINI_API_URL}/${CONFIG.GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ parts: [
+        { inlineData: { mimeType: mimeType, data: base64Data } },
+        { text: 'Identify all food items in this photo and estimate their nutrition.' }
+      ]}],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 1000 },
+    }),
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini API ${r.status}`); }
+  const d = await r.json();
+  let s = d.candidates[0].content.parts[0].text.trim();
+  const cb = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (cb) s = cb[1].trim();
+  return JSON.parse(s);
+}
+
+async function queryAIVision(base64Data, mimeType, systemPrompt) {
+  const provider = userSettings?.ai_provider || 'openai';
+  const apiKey = userSettings?.api_key || '';
+  if (!apiKey) throw new Error('No API key set. Go to Settings to add one.');
+  if (provider === 'gemini') return queryGeminiVision(base64Data, mimeType, apiKey, systemPrompt);
+  return queryOpenAIVision(base64Data, mimeType, apiKey, systemPrompt);
+}

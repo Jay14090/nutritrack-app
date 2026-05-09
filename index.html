@@ -121,7 +121,34 @@
         <div class="input-wrapper">
           <input type="text" class="food-input" id="foodInput"
                  placeholder="Type what you ate... e.g. 2 roti dal sabzi" autocomplete="off">
+          <div class="camera-btn-wrapper">
+            <button class="camera-btn" id="cameraBtn" title="Scan food photo">📷</button>
+            <div class="camera-dropdown" id="cameraDropdown">
+              <button class="camera-dropdown-item" id="camTakePhoto">
+                <span class="cam-dd-icon">📷</span>
+                <span class="cam-dd-label">Take Photo</span>
+              </button>
+              <button class="camera-dropdown-item" id="camUploadFile">
+                <span class="cam-dd-icon">📁</span>
+                <span class="cam-dd-label">Upload from Device</span>
+              </button>
+            </div>
+          </div>
           <button class="submit-btn" id="submitBtn" title="Log food">→</button>
+        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" id="fileInputMobile" accept="image/*" capture="environment" style="display:none">
+        <input type="file" id="fileInputDesktop" accept="image/*" style="display:none">
+        <!-- Photo preview -->
+        <div class="photo-preview" id="photoPreview" style="display:none;">
+          <div class="photo-preview-inner">
+            <img class="photo-preview-img" id="photoPreviewImg" alt="Food photo">
+            <div class="photo-preview-info">
+              <div class="photo-preview-label">Analyzing food...</div>
+              <div class="photo-preview-spinner"><div class="spinner"></div></div>
+            </div>
+            <button class="photo-preview-close" id="photoPreviewClose" title="Cancel">✕</button>
+          </div>
         </div>
         <div class="ai-reply" id="aiReply"></div>
       </section>
@@ -291,6 +318,24 @@
       <div class="modal-actions">
         <button class="modal-cancel-btn" id="favCancelBtn">Cancel</button>
         <button class="modal-save-btn" id="favSaveBtn">Save Favorite</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WEBCAM MODAL ═══ -->
+  <div class="modal-overlay" id="webcamModal">
+    <div class="modal-card webcam-modal-card">
+      <div class="modal-title">📷 Take Photo</div>
+      <p class="modal-desc">Point your camera at the food and capture.</p>
+      <div class="webcam-video-container">
+        <video id="webcamVideo" autoplay playsinline muted></video>
+        <canvas id="webcamCanvas" style="display:none;"></canvas>
+      </div>
+      <div class="webcam-actions">
+        <button class="modal-cancel-btn" id="webcamCancelBtn">Cancel</button>
+        <button class="modal-save-btn webcam-capture-btn" id="webcamCaptureBtn">
+          <span class="webcam-capture-icon">⬤</span> Capture
+        </button>
       </div>
     </div>
   </div>

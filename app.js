@@ -1,4 +1,4 @@
-﻿/* NutriTrack App - Main Logic (uses auth.js globals: db, currentUser, userSettings, etc.) */
+/* NutriTrack App - Main Logic (uses auth.js globals: db, currentUser, userSettings, etc.) */
 const APP = { targets: { calories: 2200, protein: 180, fat: 70, carbs: 220 }, currentDate: new Date(), activeTab: 'today' };
 
 function buildSystemPrompt() {
@@ -197,6 +197,157 @@ async function initApp(){
   refreshToday().catch(e=>console.error(e));
 }
 
+/* ─── PHOTO SCANNING ─── */
+function isMobileDevice() {
+  return ('ontouchstart' in window || navigator.maxTouchPoints > 0) && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+let webcamStream = null;
+let photoAbortController = null;
+
+function showCameraDropdown() {
+  const dd = document.getElementById('cameraDropdown');
+  dd.classList.add('visible');
+}
+
+function hideCameraDropdown() {
+  document.getElementById('cameraDropdown').classList.remove('visible');
+}
+
+function handleCameraClick() {
+  if (isMobileDevice()) {
+    // Mobile: directly open camera
+    document.getElementById('fileInputMobile').click();
+  } else {
+    // Desktop: show dropdown
+    const dd = document.getElementById('cameraDropdown');
+    if (dd.classList.contains('visible')) {
+      hideCameraDropdown();
+    } else {
+      showCameraDropdown();
+    }
+  }
+}
+
+function showPhotoPreview(dataUrl, analyzing) {
+  const preview = document.getElementById('photoPreview');
+  const img = document.getElementById('photoPreviewImg');
+  const label = preview.querySelector('.photo-preview-label');
+  const spinner = preview.querySelector('.photo-preview-spinner');
+  img.src = dataUrl;
+  if (analyzing) {
+    label.textContent = 'Analyzing food...';
+    label.classList.remove('done');
+    spinner.style.display = 'block';
+  } else {
+    label.textContent = '✅ Food detected!';
+    label.classList.add('done');
+    spinner.style.display = 'none';
+  }
+  preview.style.display = 'block';
+}
+
+function hidePhotoPreview() {
+  const preview = document.getElementById('photoPreview');
+  preview.style.display = 'none';
+  document.getElementById('photoPreviewImg').src = '';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const base64 = dataUrl.split(',')[1];
+      resolve({ base64, dataUrl, mimeType: file.type || 'image/jpeg' });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePhotoCapture(file) {
+  if (!file) return;
+  hideCameraDropdown();
+  const reply = document.getElementById('aiReply');
+  reply.classList.remove('visible');
+
+  try {
+    const { base64, dataUrl, mimeType } = await fileToBase64(file);
+    showPhotoPreview(dataUrl, true);
+
+    const result = await queryAIVision(base64, mimeType, buildSystemPrompt());
+    if (result.foods && result.foods.length) {
+      await insertLogs(result.foods, APP.currentDate);
+      await refreshToday();
+      showPhotoPreview(dataUrl, false);
+      setTimeout(hidePhotoPreview, 2500);
+    } else {
+      showPhotoPreview(dataUrl, false);
+      setTimeout(hidePhotoPreview, 2500);
+    }
+    if (result.reply) {
+      reply.textContent = result.reply;
+      reply.classList.add('visible');
+    }
+  } catch (err) {
+    hidePhotoPreview();
+    reply.textContent = 'Error: ' + err.message;
+    reply.classList.add('visible');
+  }
+
+  // Reset file inputs
+  document.getElementById('fileInputMobile').value = '';
+  document.getElementById('fileInputDesktop').value = '';
+}
+
+async function openWebcamModal() {
+  hideCameraDropdown();
+  const modal = document.getElementById('webcamModal');
+  const video = document.getElementById('webcamVideo');
+
+  try {
+    webcamStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false,
+    });
+    video.srcObject = webcamStream;
+    modal.classList.add('visible');
+  } catch (err) {
+    showToast('📷 Camera access denied or unavailable');
+    console.error('Webcam error:', err);
+  }
+}
+
+function closeWebcamModal() {
+  const modal = document.getElementById('webcamModal');
+  const video = document.getElementById('webcamVideo');
+  modal.classList.remove('visible');
+
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+  video.srcObject = null;
+}
+
+function captureWebcam() {
+  const video = document.getElementById('webcamVideo');
+  const canvas = document.getElementById('webcamCanvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  closeWebcamModal();
+
+  canvas.toBlob((blob) => {
+    if (blob) {
+      const file = new File([blob], 'webcam-capture.jpg', { type: 'image/jpeg' });
+      handlePhotoCapture(file);
+    }
+  }, 'image/jpeg', 0.85);
+}
+
 /* ─── INIT ─── */
 document.addEventListener('DOMContentLoaded', () => {
   // Login
@@ -239,6 +390,47 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('favCancelBtn').addEventListener('click', hideFavModal);
   document.getElementById('favModal').addEventListener('click',e=>{if(e.target===e.currentTarget)hideFavModal();});
 
+  // ─── Camera / Photo Scanning ───
+  document.getElementById('cameraBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    handleCameraClick();
+  });
+
+  // Desktop dropdown items
+  document.getElementById('camTakePhoto').addEventListener('click', e => {
+    e.stopPropagation();
+    openWebcamModal();
+  });
+  document.getElementById('camUploadFile').addEventListener('click', e => {
+    e.stopPropagation();
+    hideCameraDropdown();
+    document.getElementById('fileInputDesktop').click();
+  });
+
+  // File input handlers
+  document.getElementById('fileInputMobile').addEventListener('change', e => {
+    if (e.target.files[0]) handlePhotoCapture(e.target.files[0]);
+  });
+  document.getElementById('fileInputDesktop').addEventListener('change', e => {
+    if (e.target.files[0]) handlePhotoCapture(e.target.files[0]);
+  });
+
+  // Photo preview close
+  document.getElementById('photoPreviewClose').addEventListener('click', hidePhotoPreview);
+
+  // Webcam modal
+  document.getElementById('webcamCaptureBtn').addEventListener('click', captureWebcam);
+  document.getElementById('webcamCancelBtn').addEventListener('click', closeWebcamModal);
+  document.getElementById('webcamModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeWebcamModal();
+  });
+
+  // Close camera dropdown on outside click
+  document.addEventListener('click', e => {
+    const w = document.querySelector('.camera-btn-wrapper');
+    if (w && !w.contains(e.target)) hideCameraDropdown();
+  });
+
   // Check session
   const session = getSession();
   if(session && session.id){
@@ -246,3 +438,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
   }
 });
+
